@@ -1,0 +1,26 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Join Chat";
+}
+
+<div class="join-page">
+    <div class="join-panel">
+        <h1>PRN222 Group Chat</h1>
+        <p>Enter a display name and a room to start chatting in realtime.</p>
+
+        <form method="get" asp-page="/Chat" class="join-form">
+            <div class="mb-3">
+                <label class="form-label" for="displayName">Display name</label>
+                <input class="form-control" id="displayName" name="displayName" maxlength="80" required placeholder="Example: An" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="roomName">Room name</label>
+                <input class="form-control" id="roomName" name="roomName" maxlength="100" required value="PRN222-Lab" />
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Enter chat</button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,96 @@
+@page
+@model Lab3.Pages.ChatModel
+@{
+    ViewData["Title"] = $"Room {Model.RoomName}";
+}
+
+<div class="chat-shell"
+     data-room-name="@Model.RoomName"
+     data-sender-name="@Model.DisplayName">
+    <header class="chat-header">
+        <div>
+            <span class="room-label">Room</span>
+            <h1>@Model.RoomName</h1>
+        </div>
+        <div class="user-pill">@Model.DisplayName</div>
+    </header>
+
+    <main id="messagesList" class="messages-list" aria-live="polite">
+        @foreach (var message in Model.Messages)
+        {
+            var isMine = string.Equals(message.SenderName, Model.DisplayName, StringComparison.OrdinalIgnoreCase);
+            <article class="message-row @(isMine ? "mine" : "theirs")" data-message-id="@message.Id">
+                <div class="message-bubble">
+                    <div class="message-meta">
+                        <span>@message.SenderName</span>
+                        <time datetime="@message.CreatedAt.ToString("O")">@message.CreatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")</time>
+                    </div>
+
+                    @if (message.MessageType == "Text")
+                    {
+                        <div class="message-text">@message.Content</div>
+                    }
+                    else if (message.MessageType == "Image")
+                    {
+                        <a href="@message.FileUrl" target="_blank" rel="noopener">
+                            <img class="chat-image" src="@message.FileUrl" alt="@message.OriginalFileName" />
+                        </a>
+                        <div class="file-name">@message.OriginalFileName</div>
+                    }
+                    else
+                    {
+                        <a class="file-link" href="@message.FileUrl" download="@message.OriginalFileName">
+                            @message.OriginalFileName
+                        </a>
+                        <div class="file-size">@ChatModel.FormatFileSize(message.FileSize)</div>
+                    }
+
+                    <div class="reaction-line">
+                        <button class="reaction-toggle" type="button" aria-label="React to message">+</button>
+                        <div class="reaction-picker compact" hidden>
+                            @foreach (var emoji in ChatModel.AvailableEmojis)
+                            {
+                                <button type="button" data-emoji="@emoji">@emoji</button>
+                            }
+                        </div>
+                        <div class="reaction-summary">
+                            @foreach (var reaction in message.Reactions)
+                            {
+                                <span>@reaction.Emoji @reaction.Count</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </article>
+        }
+    </main>
+
+    <section class="upload-panel" id="uploadPanel" hidden>
+        <div class="progress">
+            <div id="uploadBar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+        </div>
+        <div id="uploadStatus" class="upload-status"></div>
+    </section>
+
+    <footer class="chat-composer">
+        <form id="messageForm" class="message-form">
+            @Html.AntiForgeryToken()
+            <button id="emojiButton" class="icon-button" type="button" aria-label="Open emoji picker">☺</button>
+            <div id="emojiPicker" class="emoji-picker" hidden>
+                @foreach (var emoji in ChatModel.AvailableEmojis)
+                {
+                    <button type="button" data-emoji="@emoji">@emoji</button>
+                }
+            </div>
+            <input id="messageInput" class="form-control" maxlength="4000" autocomplete="off" placeholder="Type a message..." />
+            <label class="icon-button file-button" for="fileInput" aria-label="Choose image or file">📎</label>
+            <input id="fileInput" type="file" hidden />
+            <button class="btn btn-primary send-button" type="submit">Send</button>
+        </form>
+    </footer>
+</div>
+
+@section Scripts {
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
+}

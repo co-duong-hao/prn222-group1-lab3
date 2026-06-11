@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+chatlab.db
+*.db-shm
+*.db-wal
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
