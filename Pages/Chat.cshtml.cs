@@ -12,7 +12,8 @@ namespace Lab3.Pages;
 public class ChatModel : PageModel
 {
     public const long MaxUploadSize = 20 * 1024 * 1024;
-    public static readonly string[] AvailableEmojis = ["😀", "😂", "❤️", "👍", "😢", "😮"];
+    public static readonly string[] AvailableEmojis = EmojiCatalog.MessageEmojis;
+    public static readonly string[] ReactionEmojis = EmojiCatalog.ReactionEmojis;
 
     private static readonly HashSet<string> ImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {

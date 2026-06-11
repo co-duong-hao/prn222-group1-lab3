@@ -187,26 +187,25 @@
             return;
         }
 
+        const isMine = equalsIgnoreCase(message.senderName, senderName);
         const row = document.createElement("article");
-        row.className = `message-row ${equalsIgnoreCase(message.senderName, senderName) ? "mine" : "theirs"}`;
+        row.className = `message-row ${isMine ? "mine" : "theirs"}`;
         row.dataset.messageId = message.id;
+
+        if (!isMine) {
+            row.appendChild(createAvatar(message.senderName));
+        }
+
+        const stack = document.createElement("div");
+        stack.className = "message-stack";
+
+        const sender = document.createElement("div");
+        sender.className = "sender-name";
+        sender.textContent = message.senderName;
+        stack.appendChild(sender);
 
         const bubble = document.createElement("div");
         bubble.className = "message-bubble";
-
-        const meta = document.createElement("div");
-        meta.className = "message-meta";
-
-        const sender = document.createElement("span");
-        sender.textContent = message.senderName;
-
-        const time = document.createElement("time");
-        const createdAt = new Date(message.createdAt);
-        time.dateTime = createdAt.toISOString();
-        time.textContent = formatTime(createdAt);
-
-        meta.append(sender, time);
-        bubble.appendChild(meta);
 
         if (message.messageType === "Text") {
             const text = document.createElement("div");
@@ -230,23 +229,63 @@
 
             link.appendChild(img);
             bubble.append(link, name);
-        } else {
-            const link = document.createElement("a");
-            link.className = "file-link";
-            link.href = message.fileUrl;
-            link.download = message.originalFileName ?? "";
-            link.textContent = message.originalFileName ?? "Download file";
 
             const size = document.createElement("div");
             size.className = "file-size";
             size.textContent = formatFileSize(message.fileSize);
+            bubble.appendChild(size);
+        } else {
+            const link = document.createElement("a");
+            link.className = "file-card";
+            link.href = message.fileUrl;
+            link.download = message.originalFileName ?? "";
 
-            bubble.append(link, size);
+            const icon = document.createElement("span");
+            icon.className = "file-icon";
+            icon.textContent = "📄";
+
+            const fileText = document.createElement("span");
+            const fileName = document.createElement("strong");
+            fileName.textContent = message.originalFileName ?? "Download file";
+
+            const size = document.createElement("small");
+            size.textContent = formatFileSize(message.fileSize);
+
+            fileText.append(fileName, size);
+            link.append(icon, fileText);
+            bubble.appendChild(link);
         }
 
+        const time = document.createElement("time");
+        const createdAt = new Date(message.createdAt);
+        time.className = "message-time";
+        time.dateTime = createdAt.toISOString();
+        time.textContent = formatTime(createdAt);
+        bubble.appendChild(time);
+
         bubble.appendChild(createReactionLine(message.reactions));
-        row.appendChild(bubble);
+        stack.appendChild(bubble);
+        row.appendChild(stack);
+
+        if (isMine) {
+            const avatar = createAvatar(message.senderName);
+            avatar.classList.add("mine-avatar");
+            row.appendChild(avatar);
+        }
+
         messagesList.appendChild(row);
+    }
+
+    function createAvatar(name) {
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        avatar.textContent = avatarText(name);
+        return avatar;
+    }
+
+    function avatarText(name) {
+        const value = (name ?? "?").trim();
+        return (value || "?").slice(0, 1).toUpperCase();
     }
 
     function createReactionLine(reactions) {
@@ -263,7 +302,7 @@
         picker.className = "reaction-picker compact";
         picker.hidden = true;
 
-        ["😀", "😂", "❤️", "👍", "😢", "😮"].forEach((emoji) => {
+        (window.chatReactionEmojis ?? ["😀", "😂", "❤️", "👍", "😢", "😮"]).forEach((emoji) => {
             const button = document.createElement("button");
             button.type = "button";
             button.dataset.emoji = emoji;

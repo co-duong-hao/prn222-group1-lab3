@@ -1,26 +1,91 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "Join Chat";
+    ViewData["Title"] = "LAN Chat";
 }
 
-<div class="join-page">
-    <div class="join-panel">
-        <h1>PRN222 Group Chat</h1>
-        <p>Enter a display name and a room to start chatting in realtime.</p>
+<section class="join-page">
+    <form id="joinForm" method="get" asp-page="/Chat" class="connection-panel">
+        <div class="panel-title">Thông tin kết nối</div>
 
-        <form method="get" asp-page="/Chat" class="join-form">
-            <div class="mb-3">
-                <label class="form-label" for="displayName">Display name</label>
-                <input class="form-control" id="displayName" name="displayName" maxlength="80" required placeholder="Example: An" />
-            </div>
+        <label class="field-row" for="serverHost">
+            <span>IP server:</span>
+            <input id="serverHost"
+                   maxlength="120"
+                   inputmode="url"
+                   placeholder="192.168.1.10:5245" />
+        </label>
 
-            <div class="mb-3">
-                <label class="form-label" for="roomName">Room name</label>
-                <input class="form-control" id="roomName" name="roomName" maxlength="100" required value="PRN222-Lab" />
-            </div>
+        <label class="field-row" for="displayName">
+            <span>Tên:</span>
+            <input id="displayName"
+                   name="displayName"
+                   maxlength="80"
+                   required
+                   autocomplete="name"
+                   value="User" />
+        </label>
 
-            <button class="btn btn-primary w-100" type="submit">Enter chat</button>
-        </form>
-    </div>
-</div>
+        <label class="field-row" for="roomName">
+            <span>Phòng:</span>
+            <input id="roomName"
+                   name="roomName"
+                   maxlength="100"
+                   required
+                   value="PRN222-Lab" />
+        </label>
+
+        <button class="connect-button" type="submit">Kết nối</button>
+    </form>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById("joinForm");
+            const serverHost = document.getElementById("serverHost");
+
+            serverHost.value = window.location.host;
+
+            form.addEventListener("submit", (event) => {
+                const targetHost = normalizeHost(serverHost.value);
+
+                if (!targetHost || targetHost === window.location.host) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const url = new URL(form.action, window.location.href);
+                url.host = targetHost;
+
+                const formData = new FormData(form);
+                formData.delete("serverHost");
+                url.search = new URLSearchParams(formData).toString();
+
+                window.location.href = url.toString();
+            });
+
+            function normalizeHost(value) {
+                value = value.trim();
+                if (!value) {
+                    return "";
+                }
+
+                try {
+                    const url = value.includes("://")
+                        ? new URL(value)
+                        : new URL(`${window.location.protocol}//${value}`);
+
+                    if (url.port || value.includes(":")) {
+                        return url.host;
+                    }
+
+                    return `${url.hostname}:${window.location.port || "5245"}`;
+                } catch {
+                    return value;
+                }
+            }
+        })();
+    </script>
+}

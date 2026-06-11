@@ -7,10 +7,7 @@ namespace Lab3.Hubs;
 
 public class ChatHub : Hub
 {
-    private static readonly HashSet<string> AllowedReactions = new()
-    {
-        "😀", "😂", "❤️", "👍", "😢", "😮"
-    };
+    private static readonly HashSet<string> AllowedReactions = new(EmojiCatalog.ReactionEmojis);
 
     private readonly AppDbContext _dbContext;
 

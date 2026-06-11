@@ -1,7 +1,15 @@
 @page
 @model Lab3.Pages.ChatModel
 @{
-    ViewData["Title"] = $"Room {Model.RoomName}";
+    ViewData["Title"] = $"Phòng {Model.RoomName}";
+}
+
+@functions {
+    private static string AvatarText(string? name)
+    {
+        name = string.IsNullOrWhiteSpace(name) ? "?" : name.Trim();
+        return name[..1].ToUpperInvariant();
+    }
 }
 
 <div class="chat-shell"
@@ -9,7 +17,7 @@
      data-sender-name="@Model.DisplayName">
     <header class="chat-header">
         <div>
-            <span class="room-label">Room</span>
+            <div class="room-label">Phòng chat</div>
             <h1>@Model.RoomName</h1>
         </div>
         <div class="user-pill">@Model.DisplayName</div>
@@ -20,47 +28,64 @@
         {
             var isMine = string.Equals(message.SenderName, Model.DisplayName, StringComparison.OrdinalIgnoreCase);
             <article class="message-row @(isMine ? "mine" : "theirs")" data-message-id="@message.Id">
-                <div class="message-bubble">
-                    <div class="message-meta">
-                        <span>@message.SenderName</span>
-                        <time datetime="@message.CreatedAt.ToString("O")">@message.CreatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")</time>
-                    </div>
+                @if (!isMine)
+                {
+                    <div class="avatar">@AvatarText(message.SenderName)</div>
+                }
 
-                    @if (message.MessageType == "Text")
-                    {
-                        <div class="message-text">@message.Content</div>
-                    }
-                    else if (message.MessageType == "Image")
-                    {
-                        <a href="@message.FileUrl" target="_blank" rel="noopener">
-                            <img class="chat-image" src="@message.FileUrl" alt="@message.OriginalFileName" />
-                        </a>
-                        <div class="file-name">@message.OriginalFileName</div>
-                    }
-                    else
-                    {
-                        <a class="file-link" href="@message.FileUrl" download="@message.OriginalFileName">
-                            @message.OriginalFileName
-                        </a>
-                        <div class="file-size">@ChatModel.FormatFileSize(message.FileSize)</div>
-                    }
+                <div class="message-stack">
+                    <div class="sender-name">@message.SenderName</div>
 
-                    <div class="reaction-line">
-                        <button class="reaction-toggle" type="button" aria-label="React to message">+</button>
-                        <div class="reaction-picker compact" hidden>
-                            @foreach (var emoji in ChatModel.AvailableEmojis)
-                            {
-                                <button type="button" data-emoji="@emoji">@emoji</button>
-                            }
-                        </div>
-                        <div class="reaction-summary">
-                            @foreach (var reaction in message.Reactions)
-                            {
-                                <span>@reaction.Emoji @reaction.Count</span>
-                            }
+                    <div class="message-bubble">
+                        @if (message.MessageType == "Text")
+                        {
+                            <div class="message-text">@message.Content</div>
+                        }
+                        else if (message.MessageType == "Image")
+                        {
+                            <a class="image-preview-link" href="@message.FileUrl" target="_blank" rel="noopener">
+                                <img class="chat-image" src="@message.FileUrl" alt="@message.OriginalFileName" />
+                            </a>
+                            <div class="file-name">@message.OriginalFileName</div>
+                            <div class="file-size">@ChatModel.FormatFileSize(message.FileSize)</div>
+                        }
+                        else
+                        {
+                            <a class="file-card" href="@message.FileUrl" download="@message.OriginalFileName">
+                                <span class="file-icon">📄</span>
+                                <span>
+                                    <strong>@message.OriginalFileName</strong>
+                                    <small>@ChatModel.FormatFileSize(message.FileSize)</small>
+                                </span>
+                            </a>
+                        }
+
+                        <time class="message-time" datetime="@message.CreatedAt.ToString("O")">
+                            @message.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        </time>
+
+                        <div class="reaction-line">
+                            <button class="reaction-toggle" type="button" aria-label="Thả cảm xúc">+</button>
+                            <div class="reaction-picker compact" hidden>
+                                @foreach (var emoji in ChatModel.ReactionEmojis)
+                                {
+                                    <button type="button" data-emoji="@emoji">@emoji</button>
+                                }
+                            </div>
+                            <div class="reaction-summary">
+                                @foreach (var reaction in message.Reactions)
+                                {
+                                    <span>@reaction.Emoji @reaction.Count</span>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                @if (isMine)
+                {
+                    <div class="avatar mine-avatar">@AvatarText(message.SenderName)</div>
+                }
             </article>
         }
     </main>
@@ -75,22 +100,33 @@
     <footer class="chat-composer">
         <form id="messageForm" class="message-form">
             @Html.AntiForgeryToken()
-            <button id="emojiButton" class="icon-button" type="button" aria-label="Open emoji picker">☺</button>
+
+            <button id="emojiButton" class="icon-button" type="button" aria-label="Emoji">😊</button>
             <div id="emojiPicker" class="emoji-picker" hidden>
                 @foreach (var emoji in ChatModel.AvailableEmojis)
                 {
                     <button type="button" data-emoji="@emoji">@emoji</button>
                 }
             </div>
-            <input id="messageInput" class="form-control" maxlength="4000" autocomplete="off" placeholder="Type a message..." />
-            <label class="icon-button file-button" for="fileInput" aria-label="Choose image or file">📎</label>
+
+            <input id="messageInput"
+                   class="message-input"
+                   maxlength="4000"
+                   autocomplete="off"
+                   placeholder="Nhập tin nhắn..." />
+
+            <label class="icon-button file-button" for="fileInput" aria-label="Chọn ảnh hoặc file">📎</label>
             <input id="fileInput" type="file" hidden />
-            <button class="btn btn-primary send-button" type="submit">Send</button>
+
+            <button class="send-button" type="submit">Gửi</button>
         </form>
     </footer>
 </div>
 
 @section Scripts {
     <script src="~/lib/signalr/signalr.min.js"></script>
+    <script>
+        window.chatReactionEmojis = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ChatModel.ReactionEmojis));
+    </script>
     <script src="~/js/chat.js" asp-append-version="true"></script>
 }
