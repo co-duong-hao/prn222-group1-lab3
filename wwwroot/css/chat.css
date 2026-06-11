@@ -322,6 +322,11 @@ body {
     left: 0;
 }
 
+.message-row.mine .reaction-picker {
+    right: 0;
+    left: auto;
+}
+
 .emoji-picker {
     bottom: 48px;
     left: 0;
